@@ -1,0 +1,375 @@
+/* 1. Variables: los colores se cambian aquí para toda la página.
+   Esta organización también facilita añadir un modo oscuro después. */
+:root {
+  /* Fondos, texto y colores principales. */
+  --color-fondo: #edf7f5;
+  --color-superficie: #ffffff;
+  --color-superficie-suave: #e5f3f1;
+  --color-texto: #16333b;
+  --color-texto-suave: #405f67;
+  --color-azul: #103c50;
+  --color-azul-profundo: #082b3a;
+  --color-texto-sobre-azul: #ffffff;
+  --color-verde: #b4ed50;
+  /* Bordes, enlaces y contorno de navegación con teclado. */
+  --color-borde: #b9d3d0;
+  --color-enlace: #075b75;
+  --color-foco: #086c93;
+  /* Estados de los personajes y selección de favoritos. */
+  --color-vivo-fondo: #ddf6df;
+  --color-vivo-texto: #19552a;
+  --color-muerto-fondo: #ffe5e5;
+  --color-muerto-texto: #812828;
+  --color-desconocido-fondo: #e8eef1;
+  --color-desconocido-texto: #354c58;
+  --color-favorito-fondo: #d9f4aa;
+  --color-favorito-texto: #244315;
+  /* Sombra compartida por controles y tarjetas. */
+  --sombra: 0 8px 24px rgb(16 60 80 / 10%);
+}
+
+/* 2. El ancho declarado incluye relleno y borde, evitando desbordes. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Flex coloca el contenido en vertical y permite mantener el pie abajo. */
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Los controles heredan la tipografía de la página. */
+input,
+select,
+button {
+  font: inherit;
+}
+
+/* Los textos largos pueden partirse sin ensanchar la pantalla. */
+h1,
+h2,
+h3,
+p,
+a,
+button {
+  overflow-wrap: anywhere;
+}
+
+/* El subrayado permite identificar los enlaces además de por su color. */
+a {
+  color: var(--color-enlace);
+  text-underline-offset: 0.2em;
+}
+
+/* Refuerzo visual al pasar el ratón por un enlace. */
+a:hover {
+  text-decoration-thickness: 0.15em;
+}
+
+/* El contorno muestra qué control tiene el foco al usar Tab. */
+:focus-visible {
+  outline: 3px solid var(--color-foco);
+  outline-offset: 4px;
+}
+
+/* Respeta el atributo hidden aunque otro estilo use flex o grid. */
+[hidden] {
+  display: none !important;
+}
+
+/* 3. Encabezado azul con un borde verde inspirado en la serie. */
+.encabezado {
+  padding: 2.5rem 1rem;
+  border-bottom: 5px solid var(--color-verde);
+  background-color: var(--color-azul);
+  background-image: linear-gradient(135deg, var(--color-azul-profundo), var(--color-azul));
+  color: var(--color-texto-sobre-azul);
+  text-align: center;
+}
+
+/* clamp adapta el título entre un tamaño mínimo y otro máximo. */
+.encabezado h1 {
+  margin: 0 0 0.75rem;
+  color: var(--color-verde);
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  line-height: 1.2;
+}
+
+/* Un subtítulo de ancho limitado resulta más fácil de leer. */
+.encabezado p {
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+/* 4. Contenedor centrado: ocupa el ancho disponible hasta 1200 píxeles. */
+.contenedor {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  flex: 1;
+}
+
+/* Separa las secciones consecutivas, como personajes y favoritos. */
+.contenedor > section + section {
+  margin-top: 2.5rem;
+}
+
+/* Los títulos de sección llevan una línea inferior. */
+.contenedor h2 {
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--color-borde);
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
+/* 5. Grid organiza buscador y filtros; en celular hay una columna.
+   minmax(0, 1fr) deja que la columna se reduzca sin desbordar. */
+.controles {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 16px;
+  background-color: var(--color-superficie);
+  box-shadow: var(--sombra);
+}
+
+/* Buscador y filtros comparten aspecto y altura cómoda para tocar. */
+.controles input,
+.controles select {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0.75rem;
+  border: 1px solid var(--color-texto-suave);
+  border-radius: 8px;
+  background-color: var(--color-superficie);
+  color: var(--color-texto);
+}
+
+/* El texto de ejemplo conserva un color legible. */
+.controles input::placeholder {
+  color: var(--color-texto-suave);
+  opacity: 1;
+}
+
+/* La forma del cursor indica que el filtro es interactivo. */
+.controles select {
+  cursor: pointer;
+}
+
+/* 6. Resultados y favoritos comparten una rejilla de una columna. */
+.rejilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+/* 7. Las tarjetas colocan imagen e información en vertical. */
+.tarjeta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-borde);
+  border-radius: 16px;
+  background-color: var(--color-superficie);
+  box-shadow: var(--sombra);
+}
+
+/* Imagen cuadrada: cover llena el espacio sin deformarla. */
+.tarjeta img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background-color: var(--color-superficie-suave);
+}
+
+/* La información ocupa el espacio restante y separa sus elementos. */
+.tarjeta-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 1rem;
+}
+
+/* El nombre funciona como h2 o h3 sin heredar el borde de sección. */
+.tarjeta-info h2,
+.tarjeta-info h3 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--color-texto);
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+/* Los datos usan texto secundario y no añaden márgenes extra. */
+.tarjeta-info p {
+  margin: 0;
+  color: var(--color-texto-suave);
+}
+
+/* 8. La etiqueta básica sirve aunque JavaScript no indique un estado. */
+.etiqueta {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  background-color: var(--color-desconocido-fondo);
+  color: var(--color-desconocido-texto);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* Opcional: JavaScript debe añadir data-estado="alive" a la etiqueta. */
+.etiqueta[data-estado="alive"] {
+  background-color: var(--color-vivo-fondo);
+  color: var(--color-vivo-texto);
+}
+
+/* Opcional: color para el estado dead, manteniendo el texto visible. */
+.etiqueta[data-estado="dead"] {
+  background-color: var(--color-muerto-fondo);
+  color: var(--color-muerto-texto);
+}
+
+/* Opcional: color para un estado unknown. */
+.etiqueta[data-estado="unknown"] {
+  background-color: var(--color-desconocido-fondo);
+  color: var(--color-desconocido-texto);
+}
+
+/* 9. Botón preparado para favoritos; margin-top lo empuja hacia abajo
+   cuando está dentro de tarjeta-info y sobra espacio vertical. */
+.boton-favorito {
+  width: 100%;
+  min-height: 44px;
+  margin-top: auto;
+  padding: 0.7rem 1rem;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background-color: var(--color-azul);
+  color: var(--color-texto-sobre-azul);
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* Cambio visual al pasar el ratón por un botón habilitado. */
+.boton-favorito:hover:not(:disabled) {
+  background-color: var(--color-azul-profundo);
+}
+
+/* JavaScript podrá usar aria-pressed para indicar un favorito guardado. */
+.boton-favorito[aria-pressed="true"] {
+  border-color: var(--color-favorito-texto);
+  background-color: var(--color-favorito-fondo);
+  color: var(--color-favorito-texto);
+}
+
+/* La selección también tiene una respuesta visual al pasar el ratón. */
+.boton-favorito[aria-pressed="true"]:hover:not(:disabled) {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* Un botón deshabilitado se distingue y cambia su cursor. */
+.boton-favorito:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 10. Avisos de carga, errores y secciones sin resultados. */
+.mensaje {
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border-left: 4px solid var(--color-enlace);
+  border-radius: 8px;
+  background-color: var(--color-superficie-suave);
+  color: var(--color-texto);
+}
+
+/* El mensaje no muestra una caja si no contiene texto ni elementos. */
+.mensaje:empty {
+  display: none;
+}
+
+/* Los mensajes dentro de una rejilla abarcan todas sus columnas. */
+.rejilla > .mensaje {
+  grid-column: 1 / -1;
+}
+
+/* 11. Pie de página con créditos separados del contenido. */
+.pie {
+  padding: 1.5rem 1rem;
+  border-top: 1px solid var(--color-borde);
+  background-color: var(--color-superficie);
+  color: var(--color-texto-suave);
+  text-align: center;
+}
+
+/* Elimina el margen que el navegador añade al párrafo del pie. */
+.pie p {
+  margin: 0;
+}
+
+/* Destaca el enlace a la API. */
+.pie a {
+  font-weight: 700;
+}
+
+/* 12. Media query: desde 600 píxeles se aplican estas adaptaciones. */
+@media (min-width: 600px) {
+  /* Dos columnas iguales para los controles. */
+  .controles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 1.25rem;
+  }
+
+  /* Dos tarjetas por fila. */
+  .rejilla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Más espacio lateral cuando la pantalla lo permite. */
+  .contenedor {
+    padding-right: 1.5rem;
+    padding-left: 1.5rem;
+  }
+}
+
+/* 13. Desde 1000 píxeles se aprovecha el espacio de computadora. */
+@media (min-width: 1000px) {
+  /* Buscador y filtros en una fila; el buscador recibe el doble de ancho. */
+  .controles {
+    grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+  }
+
+  /* Cuatro tarjetas por fila. */
+  .rejilla {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  /* Encabezado más amplio en pantallas grandes. */
+  .encabezado {
+    padding: 3.5rem 1.5rem;
+  }
+}
