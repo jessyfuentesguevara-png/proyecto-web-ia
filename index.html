@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<!-- Le dice al navegador que este archivo es HTML moderno (HTML5) -->
+<html lang="es">
+<!-- lang="es" indica que la página está en español -->
+
+<head>
+  <!-- El head guarda información "invisible" sobre la página -->
+
+  <!-- Permite que se vean bien los acentos y la ñ -->
+  <meta charset="UTF-8">
+
+  <!-- Hace que la página se adapte al ancho del celular (diseño responsive) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Título que aparece en la pestaña del navegador -->
+  <title>Explorador Rick and Morty</title>
+
+  <!-- Conecta el archivo de estilos (lo crearemos en el paso 5) -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Conecta el archivo de JavaScript; "defer" espera a que cargue todo el HTML antes de ejecutarlo -->
+  <script src="script.js" defer></script>
+</head>
+
+<body>
+  <!-- El body es todo lo que se ve en pantalla -->
+
+  <!-- ENCABEZADO: título y descripción de la página -->
+  <header class="encabezado">
+    <h1>Explorador Rick and Morty</h1>
+    <p>Busca personajes, filtra los resultados y guarda tus favoritos.</p>
+  </header>
+
+  <main class="contenedor">
+    <!-- main es el contenido principal de la página -->
+
+    <!-- ZONA DE CONTROLES: buscador y filtros -->
+    <section class="controles" aria-label="Buscador y filtros">
+
+      <!-- Buscador: el usuario escribe aquí el nombre del personaje -->
+      <input
+        type="text"
+        id="buscador"
+        placeholder="Buscar personaje por nombre..."
+        aria-label="Buscar personaje por nombre"
+      >
+
+      <!-- Filtro por estado de vida del personaje -->
+      <select id="filtro-estado" aria-label="Filtrar por estado">
+        <option value="">Todos los estados</option>
+        <option value="alive">Vivo</option>
+        <option value="dead">Muerto</option>
+        <option value="unknown">Desconocido</option>
+      </select>
+
+      <!-- Filtro por género del personaje -->
+      <select id="filtro-genero" aria-label="Filtrar por género">
+        <option value="">Todos los géneros</option>
+        <option value="female">Femenino</option>
+        <option value="male">Masculino</option>
+        <option value="genderless">Sin género</option>
+        <option value="unknown">Desconocido</option>
+      </select>
+
+      <!-- Filtro por especie del personaje -->
+      <select id="filtro-especie" aria-label="Filtrar por especie">
+        <option value="">Todas las especies</option>
+        <option value="Human">Humano</option>
+        <option value="Alien">Alienígena</option>
+        <option value="Humanoid">Humanoide</option>
+        <option value="Robot">Robot</option>
+        <option value="Animal">Animal</option>
+      </select>
+    </section>
+
+    <!-- MENSAJES: aquí JavaScript mostrará "Cargando...", "Sin resultados" o errores -->
+    <p id="mensaje" class="mensaje" role="status"></p>
+
+    <!-- RESULTADOS: aquí JavaScript va a crear las tarjetas de los personajes -->
+    <section>
+      <h2>Personajes</h2>
+      <div id="resultados" class="rejilla"></div>
+    </section>
+
+    <!-- FAVORITOS: aquí JavaScript va a mostrar los personajes que el usuario guarde -->
+    <section>
+      <h2>Mis favoritos</h2>
+      <p id="mensaje-favoritos" class="mensaje">Aún no tienes favoritos.</p>
+      <div id="favoritos" class="rejilla"></div>
+    </section>
+  </main>
+
+  <!-- PIE DE PÁGINA: créditos de la API -->
+  <footer class="pie">
+    <p>Datos obtenidos de <a href="https://rickandmortyapi.com" target="_blank" rel="noopener">The Rick and Morty API</a>.</p>
+  </footer>
+</body>
+</html>
