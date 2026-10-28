@@ -317,6 +317,48 @@ a:hover {
   grid-column: 1 / -1;
 }
 
+/* Navegación de páginas: flex permite acomodar controles incluso en celular. */
+.paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+/* El indicador mantiene un tamaño legible y no añade márgenes adicionales. */
+.paginacion p {
+  margin: 0;
+  color: var(--color-texto-suave);
+  text-align: center;
+}
+
+/* Botones con altura cómoda para pulsar con el dedo y colores compartidos. */
+.boton-pagina {
+  min-height: 44px;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--color-azul);
+  border-radius: 8px;
+  background-color: var(--color-azul);
+  color: var(--color-texto-sobre-azul);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Destaca únicamente los botones disponibles al pasar el ratón. */
+.boton-pagina:hover:not(:disabled) {
+  background-color: var(--color-azul-profundo);
+}
+
+/* Los botones bloqueados conservan texto legible y un aspecto diferenciado. */
+.boton-pagina:disabled {
+  border-color: var(--color-borde);
+  background-color: var(--color-superficie-suave);
+  color: var(--color-texto-suave);
+  cursor: not-allowed;
+}
+
 /* 11. Pie de página con créditos separados del contenido. */
 .pie {
   padding: 1.5rem 1rem;

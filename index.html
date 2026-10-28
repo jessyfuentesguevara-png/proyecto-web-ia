@@ -80,6 +80,15 @@
     <section>
       <h2>Personajes</h2>
       <div id="resultados" class="rejilla"></div>
+
+      <!-- Navegación entre páginas: JavaScript la muestra al recibir resultados. -->
+      <nav id="paginacion" class="paginacion" aria-label="Páginas de personajes" hidden>
+        <!-- type="button" evita enviar formularios si se añaden en el futuro. -->
+        <button id="pagina-anterior" class="boton-pagina" type="button" aria-controls="resultados" disabled>Anterior</button>
+        <!-- role="status" anuncia el número de página sin mover el foco. -->
+        <p id="info-pagina" role="status"></p>
+        <button id="pagina-siguiente" class="boton-pagina" type="button" aria-controls="resultados" disabled>Siguiente</button>
+      </nav>
     </section>
 
     <!-- FAVORITOS: aquí JavaScript va a mostrar los personajes que el usuario guarde -->

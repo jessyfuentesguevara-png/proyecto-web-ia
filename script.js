@@ -16,6 +16,16 @@ const filtroEstado = document.getElementById("filtro-estado");
 const filtroGenero = document.getElementById("filtro-genero");
 const filtroEspecie = document.getElementById("filtro-especie");
 
+// Controles para navegar por los resultados que entrega la API por páginas.
+const paginacion = document.getElementById("paginacion");
+const botonAnterior = document.getElementById("pagina-anterior");
+const botonSiguiente = document.getElementById("pagina-siguiente");
+const infoPagina = document.getElementById("info-pagina");
+
+// Guardamos la página mostrada y el total de páginas de la consulta actual.
+let paginaActual = 1;
+let totalPaginas = 0;
+
 // El temporizador permite esperar a que el usuario deje de escribir.
 let temporizadorBusqueda;
 
@@ -42,7 +52,7 @@ function limpiarMensaje() {
 }
 
 // Construye la dirección de consulta con los controles actuales.
-function crearUrlConsulta() {
+function crearUrlConsulta(pagina) {
   // URLSearchParams prepara los parámetros y codifica espacios y símbolos.
   const parametros = new URLSearchParams();
 
@@ -55,9 +65,32 @@ function crearUrlConsulta() {
   if (filtroGenero.value) parametros.set("gender", filtroGenero.value);
   if (filtroEspecie.value) parametros.set("species", filtroEspecie.value);
 
+  // La API usa page para elegir la página; omitirlo equivale a pedir la primera.
+  if (pagina > 1) parametros.set("page", pagina);
+
   // Sin parámetros, la API vuelve a mostrar la primera página general.
   const consulta = parametros.toString();
   return consulta ? `${URL_API}?${consulta}` : URL_API;
+}
+
+// Una búsqueda distinta empieza desde la primera página y oculta datos antiguos.
+function reiniciarPaginacion() {
+  paginaActual = 1;
+  totalPaginas = 0;
+  paginacion.hidden = true;
+  botonAnterior.disabled = true;
+  botonSiguiente.disabled = true;
+  infoPagina.textContent = "";
+}
+
+// Actualiza el indicador y evita avanzar fuera del rango de páginas.
+function actualizarPaginacion(pagina, total) {
+  paginaActual = pagina;
+  totalPaginas = total;
+  infoPagina.textContent = `Página ${paginaActual} de ${totalPaginas}`;
+  botonAnterior.disabled = paginaActual <= 1;
+  botonSiguiente.disabled = paginaActual >= totalPaginas;
+  paginacion.hidden = false;
 }
 
 // ===== CREAR TARJETAS =====
@@ -94,13 +127,19 @@ function mostrarPersonajes(personajes) {
 // ===== CONSULTAR LA API =====
 
 // Función principal: pide los personajes y los muestra
-async function cargarPersonajes() {
+async function cargarPersonajes(pagina = 1) {
   // Cancelamos la petición anterior para que no reemplace la búsqueda nueva.
   if (controladorConsulta) controladorConsulta.abort();
 
   // Cada consulta conserva su propio controlador durante toda la función.
   const controladorActual = new AbortController();
   controladorConsulta = controladorActual;
+
+  // Bloqueamos los dos botones durante la carga para evitar clics repetidos.
+  botonAnterior.disabled = true;
+  botonSiguiente.disabled = true;
+  if (!paginacion.hidden) infoPagina.textContent = "Cargando página...";
+  contenedorResultados.setAttribute("aria-busy", "true");
 
   // Avisamos al usuario que estamos buscando
   mostrarMensaje("Cargando personajes...");
@@ -109,7 +148,7 @@ async function cargarPersonajes() {
   // try/catch: "intenta esto, y si algo falla, haz esto otro"
   try {
     // Mandamos el mensajero a la API y esperamos su respuesta
-    const respuesta = await fetch(crearUrlConsulta(), {
+    const respuesta = await fetch(crearUrlConsulta(pagina), {
       // La señal permite detener esta petición cuando cambia la búsqueda.
       signal: controladorActual.signal
     });
@@ -119,6 +158,8 @@ async function cargarPersonajes() {
 
     // Si la API contesta 404, significa que no encontró resultados
     if (respuesta.status === 404) {
+      // Sin resultados no hay páginas por las que navegar.
+      reiniciarPaginacion();
       mostrarMensaje("No se encontraron personajes.");
       return; // terminamos aquí
     }
@@ -136,6 +177,8 @@ async function cargarPersonajes() {
 
     // Cubrimos también una respuesta correcta que traiga una lista vacía.
     if (datos.results.length === 0) {
+      // También ocultamos la navegación si la lista viene vacía.
+      reiniciarPaginacion();
       mostrarMensaje("No se encontraron personajes.");
       return;
     }
@@ -143,13 +186,23 @@ async function cargarPersonajes() {
     // Los personajes vienen dentro de "results"
     limpiarMensaje();
     mostrarPersonajes(datos.results);
+
+    // info.pages indica cuántas páginas tiene esta combinación de filtros.
+    actualizarPaginacion(pagina, datos.info.pages);
   } catch (error) {
     // Cancelar una búsqueda antigua es normal: no mostramos un error por eso.
     if (controladorActual.signal.aborted) return;
 
     // Si no hubo internet o la API no responde, caemos aquí
     console.error(error); // lo dejamos en la consola para depurar
+    // Ocultamos la navegación porque no se pudo obtener una página válida.
+    reiniciarPaginacion();
     mostrarMensaje("No se pudo conectar con la API. Intenta de nuevo más tarde.");
+  } finally {
+    // Una consulta cancelada no debe modificar el estado de la nueva consulta.
+    if (!controladorActual.signal.aborted) {
+      contenedorResultados.setAttribute("aria-busy", "false");
+    }
   }
 }
 
@@ -159,6 +212,9 @@ async function cargarPersonajes() {
 buscador.addEventListener("input", function () {
   // Reiniciamos la espera con cada cambio para no consultar por cada letra.
   clearTimeout(temporizadorBusqueda);
+
+  // Un nombre nuevo puede tener menos páginas: siempre volvemos a la primera.
+  reiniciarPaginacion();
 
   // Cancelamos enseguida para no mostrar resultados de un nombre anterior.
   if (controladorConsulta) controladorConsulta.abort();
@@ -174,8 +230,24 @@ buscador.addEventListener("input", function () {
   filtro.addEventListener("change", function () {
     // Evitamos repetir una búsqueda que estaba esperando en el temporizador.
     clearTimeout(temporizadorBusqueda);
+    // Cambiar un filtro también inicia una nueva lista desde su primera página.
+    reiniciarPaginacion();
     cargarPersonajes();
   });
+});
+
+// Retrocede una página conservando el nombre y todos los filtros actuales.
+botonAnterior.addEventListener("click", function () {
+  if (!botonAnterior.disabled && paginaActual > 1) {
+    cargarPersonajes(paginaActual - 1);
+  }
+});
+
+// Avanza solo si existe otra página; durante la carga el botón está bloqueado.
+botonSiguiente.addEventListener("click", function () {
+  if (!botonSiguiente.disabled && paginaActual < totalPaginas) {
+    cargarPersonajes(paginaActual + 1);
+  }
 });
 
 // ===== INICIO =====
