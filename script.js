@@ -1,256 +1,211 @@
 // ===== CONFIGURACIÓN =====
 
-// Dirección de la API que devuelve la lista de personajes
+// Dirección base para consultar personajes.
 const URL_API = "https://rickandmortyapi.com/api/character";
 
+// Esperamos 400 milisegundos desde el último cambio en el buscador.
+const ESPERA_BUSQUEDA = 400;
+
 // ===== ELEMENTOS DEL HTML =====
-// Aquí "atrapamos" las piezas del index.html usando sus id,
-// para poder escribir dentro de ellas desde JavaScript
 
-const contenedorResultados = document.getElementById("resultados"); // zona de tarjetas
-const mensaje = document.getElementById("mensaje");                 // zona de mensajes
-
-// Conectamos el buscador y los filtros usando sus id del HTML.
+// Conectamos JavaScript con los elementos existentes de la página.
+const contenedorResultados = document.getElementById("resultados");
+const mensaje = document.getElementById("mensaje");
 const buscador = document.getElementById("buscador");
-const filtroEstado = document.getElementById("filtro-estado");
-const filtroGenero = document.getElementById("filtro-genero");
-const filtroEspecie = document.getElementById("filtro-especie");
 
-// Controles para navegar por los resultados que entrega la API por páginas.
-const paginacion = document.getElementById("paginacion");
-const botonAnterior = document.getElementById("pagina-anterior");
-const botonSiguiente = document.getElementById("pagina-siguiente");
-const infoPagina = document.getElementById("info-pagina");
+// ===== ESTADO DEL BUSCADOR =====
 
-// Guardamos la página mostrada y el total de páginas de la consulta actual.
-let paginaActual = 1;
-let totalPaginas = 0;
-
-// El temporizador permite esperar a que el usuario deje de escribir.
+// Guardamos el temporizador para reiniciarlo con cada cambio.
 let temporizadorBusqueda;
 
-// Este controlador permite cancelar una consulta que ya quedó antigua.
+// Guardamos el controlador para cancelar consultas antiguas.
 let controladorConsulta;
 
 // ===== FUNCIONES AUXILIARES =====
 
-// Traduce el estado que manda la API (en inglés) a español
+// Traducimos al español el estado recibido desde la API.
 function traducirEstado(estado) {
   if (estado === "Alive") return "Vivo";
   if (estado === "Dead") return "Muerto";
   return "Desconocido";
 }
 
-// Muestra un texto en la zona de mensajes (por ejemplo "Cargando...")
+// Escribimos un aviso en la zona de mensajes.
 function mostrarMensaje(texto) {
   mensaje.textContent = texto;
 }
 
-// Borra el mensaje cuando ya no hace falta
+// Quitamos el aviso cuando ya tenemos resultados.
 function limpiarMensaje() {
   mensaje.textContent = "";
 }
 
-// Construye la dirección de consulta con los controles actuales.
-function crearUrlConsulta(pagina) {
-  // URLSearchParams prepara los parámetros y codifica espacios y símbolos.
+// Construimos la dirección usando únicamente el nombre escrito.
+function construirURL() {
+  // URLSearchParams organiza y codifica espacios y símbolos especiales.
   const parametros = new URLSearchParams();
 
-  // trim elimina espacios accidentales al principio y al final del nombre.
+  // Quitamos espacios accidentales al principio y al final.
   const nombre = buscador.value.trim();
 
-  // Solo enviamos los campos que tengan un valor seleccionado.
-  if (nombre) parametros.set("name", nombre);
-  if (filtroEstado.value) parametros.set("status", filtroEstado.value);
-  if (filtroGenero.value) parametros.set("gender", filtroGenero.value);
-  if (filtroEspecie.value) parametros.set("species", filtroEspecie.value);
+  // Solo añadimos name cuando el usuario escribió algo.
+  if (nombre !== "") {
+    parametros.set("name", nombre);
+  }
 
-  // La API usa page para elegir la página; omitirlo equivale a pedir la primera.
-  if (pagina > 1) parametros.set("page", pagina);
+  // En el siguiente commit se podrán añadir aquí los filtros con parametros.set.
 
-  // Sin parámetros, la API vuelve a mostrar la primera página general.
+  // Convertimos los parámetros en una cadena lista para incluir en la URL.
   const consulta = parametros.toString();
-  return consulta ? `${URL_API}?${consulta}` : URL_API;
-}
 
-// Una búsqueda distinta empieza desde la primera página y oculta datos antiguos.
-function reiniciarPaginacion() {
-  paginaActual = 1;
-  totalPaginas = 0;
-  paginacion.hidden = true;
-  botonAnterior.disabled = true;
-  botonSiguiente.disabled = true;
-  infoPagina.textContent = "";
-}
+  // Un campo vacío devuelve la dirección general, sin el parámetro name.
+  if (consulta === "") {
+    return URL_API;
+  }
 
-// Actualiza el indicador y evita avanzar fuera del rango de páginas.
-function actualizarPaginacion(pagina, total) {
-  paginaActual = pagina;
-  totalPaginas = total;
-  infoPagina.textContent = `Página ${paginaActual} de ${totalPaginas}`;
-  botonAnterior.disabled = paginaActual <= 1;
-  botonSiguiente.disabled = paginaActual >= totalPaginas;
-  paginacion.hidden = false;
+  // El signo de interrogación separa la dirección de los parámetros.
+  return `${URL_API}?${consulta}`;
 }
 
 // ===== CREAR TARJETAS =====
 
-// Recibe la lista de personajes y dibuja una tarjeta por cada uno
+// Dibujamos una tarjeta por cada personaje recibido.
 function mostrarPersonajes(personajes) {
-  // Primero vaciamos las tarjetas anteriores
+  // Quitamos las tarjetas de la consulta anterior.
   contenedorResultados.innerHTML = "";
 
-  // Recorremos la lista, personaje por personaje
+  // Recorremos la lista y construimos sus elementos HTML.
   personajes.forEach(function (personaje) {
-    // Creamos un contenedor nuevo para la tarjeta
+    // Conservamos las clases utilizadas por style.css.
     const tarjeta = document.createElement("article");
     tarjeta.className = "tarjeta";
 
-    // Llenamos la tarjeta con la imagen y la descripción del personaje
-    tarjeta.innerHTML = `
-      <img src="${personaje.image}" alt="Foto de ${personaje.name}">
-      <div class="tarjeta-info">
-        <h3>${personaje.name}</h3>
-        <span class="etiqueta">${traducirEstado(personaje.status)}</span>
-        <p>Especie: ${personaje.species}</p>
-        <p>Género: ${personaje.gender}</p>
-        <p>Origen: ${personaje.origin.name}</p>
-        <p>Ubicación: ${personaje.location.name}</p>
-      </div>
-    `;
+    // Creamos la imagen con un texto alternativo descriptivo.
+    const imagen = document.createElement("img");
+    imagen.src = personaje.image;
+    imagen.alt = `Foto de ${personaje.name}`;
 
-    // Metemos la tarjeta terminada dentro de la página
+    // Preparamos el contenedor de información.
+    const informacion = document.createElement("div");
+    informacion.className = "tarjeta-info";
+
+    // textContent muestra los datos como texto, sin interpretarlos como HTML.
+    const nombre = document.createElement("h3");
+    nombre.textContent = personaje.name;
+
+    // Creamos la etiqueta con el estado traducido.
+    const etiqueta = document.createElement("span");
+    etiqueta.className = "etiqueta";
+    etiqueta.textContent = traducirEstado(personaje.status);
+
+    // Agrupamos los datos que se mostrarán como párrafos.
+    const detalles = [
+      `Especie: ${personaje.species}`,
+      `Género: ${personaje.gender}`,
+      `Origen: ${personaje.origin.name}`,
+      `Ubicación: ${personaje.location.name}`
+    ];
+
+    // Colocamos el nombre y la etiqueta antes de los detalles.
+    informacion.append(nombre, etiqueta);
+
+    // Creamos un párrafo por cada dato.
+    detalles.forEach(function (texto) {
+      const parrafo = document.createElement("p");
+      parrafo.textContent = texto;
+      informacion.appendChild(parrafo);
+    });
+
+    // Montamos la tarjeta y la añadimos a la página.
+    tarjeta.append(imagen, informacion);
     contenedorResultados.appendChild(tarjeta);
   });
 }
 
 // ===== CONSULTAR LA API =====
 
-// Función principal: pide los personajes y los muestra
-async function cargarPersonajes(pagina = 1) {
-  // Cancelamos la petición anterior para que no reemplace la búsqueda nueva.
-  if (controladorConsulta) controladorConsulta.abort();
+// Pedimos los personajes que coincidan con el nombre actual.
+async function cargarPersonajes() {
+  // Cancelamos la consulta anterior si todavía está en marcha.
+  if (controladorConsulta) {
+    controladorConsulta.abort();
+  }
 
-  // Cada consulta conserva su propio controlador durante toda la función.
+  // Cada consulta conserva su propio controlador.
   const controladorActual = new AbortController();
   controladorConsulta = controladorActual;
 
-  // Bloqueamos los dos botones durante la carga para evitar clics repetidos.
-  botonAnterior.disabled = true;
-  botonSiguiente.disabled = true;
-  if (!paginacion.hidden) infoPagina.textContent = "Cargando página...";
-  contenedorResultados.setAttribute("aria-busy", "true");
-
-  // Avisamos al usuario que estamos buscando
+  // Indicamos que estamos cargando y quitamos resultados antiguos.
   mostrarMensaje("Cargando personajes...");
   contenedorResultados.innerHTML = "";
 
-  // try/catch: "intenta esto, y si algo falla, haz esto otro"
+  // Intentamos consultar la API; catch atiende los errores.
   try {
-    // Mandamos el mensajero a la API y esperamos su respuesta
-    const respuesta = await fetch(crearUrlConsulta(pagina), {
-      // La señal permite detener esta petición cuando cambia la búsqueda.
+    // Usamos la dirección generada y una señal para poder cancelar la consulta.
+    const respuesta = await fetch(construirURL(), {
       signal: controladorActual.signal
     });
 
-    // Ignoramos cualquier respuesta que ya haya sido cancelada.
+    // Una consulta cancelada no debe actualizar la pantalla.
     if (controladorActual.signal.aborted) return;
 
-    // Si la API contesta 404, significa que no encontró resultados
+    // Conservamos el mensaje específico para una respuesta 404.
     if (respuesta.status === 404) {
-      // Sin resultados no hay páginas por las que navegar.
-      reiniciarPaginacion();
-      mostrarMensaje("No se encontraron personajes.");
-      return; // terminamos aquí
-    }
-
-    // Si la API contesta con cualquier otro error (500, etc.)
-    if (!respuesta.ok) {
-      throw new Error("La API respondió con un error: " + respuesta.status);
-    }
-
-    // Convertimos la respuesta a datos que JavaScript entiende (JSON)
-    const datos = await respuesta.json();
-
-    // El usuario también puede cambiar la búsqueda mientras leemos el JSON.
-    if (controladorActual.signal.aborted) return;
-
-    // Cubrimos también una respuesta correcta que traiga una lista vacía.
-    if (datos.results.length === 0) {
-      // También ocultamos la navegación si la lista viene vacía.
-      reiniciarPaginacion();
       mostrarMensaje("No se encontraron personajes.");
       return;
     }
 
-    // Los personajes vienen dentro de "results"
-    limpiarMensaje();
-    mostrarPersonajes(datos.results);
+    // Los demás errores HTTP pasan al bloque catch.
+    if (!respuesta.ok) {
+      throw new Error("La API respondió con un error: " + respuesta.status);
+    }
 
-    // info.pages indica cuántas páginas tiene esta combinación de filtros.
-    actualizarPaginacion(pagina, datos.info.pages);
-  } catch (error) {
-    // Cancelar una búsqueda antigua es normal: no mostramos un error por eso.
+    // Convertimos la respuesta JSON en datos de JavaScript.
+    const datos = await respuesta.json();
+
+    // También puede haberse cancelado mientras leíamos el JSON.
     if (controladorActual.signal.aborted) return;
 
-    // Si no hubo internet o la API no responde, caemos aquí
-    console.error(error); // lo dejamos en la consola para depurar
-    // Ocultamos la navegación porque no se pudo obtener una página válida.
-    reiniciarPaginacion();
-    mostrarMensaje("No se pudo conectar con la API. Intenta de nuevo más tarde.");
-  } finally {
-    // Una consulta cancelada no debe modificar el estado de la nueva consulta.
-    if (!controladorActual.signal.aborted) {
-      contenedorResultados.setAttribute("aria-busy", "false");
+    // Cubrimos una respuesta correcta que incluya una lista vacía.
+    if (datos.results.length === 0) {
+      mostrarMensaje("No se encontraron personajes.");
+      return;
     }
+
+    // Quitamos el aviso y mostramos los personajes recibidos.
+    limpiarMensaje();
+    mostrarPersonajes(datos.results);
+  } catch (error) {
+    // Una cancelación es normal y no representa un fallo de conexión.
+    if (controladorActual.signal.aborted) return;
+
+    // Guardamos el detalle técnico y mostramos el aviso al usuario.
+    console.error(error);
+    mostrarMensaje("No se pudo conectar con la API. Intenta de nuevo más tarde.");
   }
 }
 
-// ===== BUSCADOR Y FILTROS =====
+// ===== ESCUCHAR EL BUSCADOR =====
 
-// input se ejecuta al escribir, pegar texto o borrar el nombre.
+// input detecta cambios al escribir, pegar texto o borrarlo.
 buscador.addEventListener("input", function () {
-  // Reiniciamos la espera con cada cambio para no consultar por cada letra.
+  // Reiniciamos la espera con cada cambio para evitar consultar por cada letra.
   clearTimeout(temporizadorBusqueda);
 
-  // Un nombre nuevo puede tener menos páginas: siempre volvemos a la primera.
-  reiniciarPaginacion();
+  // Cancelamos inmediatamente cualquier consulta del nombre anterior.
+  if (controladorConsulta) {
+    controladorConsulta.abort();
+  }
 
-  // Cancelamos enseguida para no mostrar resultados de un nombre anterior.
-  if (controladorConsulta) controladorConsulta.abort();
+  // Quitamos las tarjetas antiguas mientras esperamos la consulta nueva.
   contenedorResultados.innerHTML = "";
   mostrarMensaje("Cargando personajes...");
 
-  // Tras 350 milisegundos sin cambios, consultamos el nombre completo.
-  temporizadorBusqueda = setTimeout(cargarPersonajes, 350);
-});
-
-// Los filtros consultan inmediatamente y conservan el nombre escrito.
-[filtroEstado, filtroGenero, filtroEspecie].forEach(function (filtro) {
-  filtro.addEventListener("change", function () {
-    // Evitamos repetir una búsqueda que estaba esperando en el temporizador.
-    clearTimeout(temporizadorBusqueda);
-    // Cambiar un filtro también inicia una nueva lista desde su primera página.
-    reiniciarPaginacion();
-    cargarPersonajes();
-  });
-});
-
-// Retrocede una página conservando el nombre y todos los filtros actuales.
-botonAnterior.addEventListener("click", function () {
-  if (!botonAnterior.disabled && paginaActual > 1) {
-    cargarPersonajes(paginaActual - 1);
-  }
-});
-
-// Avanza solo si existe otra página; durante la carga el botón está bloqueado.
-botonSiguiente.addEventListener("click", function () {
-  if (!botonSiguiente.disabled && paginaActual < totalPaginas) {
-    cargarPersonajes(paginaActual + 1);
-  }
+  // Consultamos tras 400 milisegundos sin nuevos cambios.
+  temporizadorBusqueda = setTimeout(cargarPersonajes, ESPERA_BUSQUEDA);
 });
 
 // ===== INICIO =====
 
-// Al abrir la página, cargamos los personajes automáticamente
+// Al abrir la página cargamos la primera página general de personajes.
 cargarPersonajes();
