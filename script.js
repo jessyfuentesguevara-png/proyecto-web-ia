@@ -397,7 +397,57 @@ botonSiguiente.addEventListener("click", function () {
   }
 });
 
+// ===== MODO OSCURO =====
+
+// Nombre con el que se guarda el tema elegido dentro de localStorage
+const CLAVE_TEMA = "tema-rick-and-morty";
+
+// Botón del encabezado que cambia entre modo claro y modo oscuro
+const botonTema = document.getElementById("boton-tema");
+
+// Lee el tema guardado; si nunca eligió, usamos la preferencia del sistema del usuario.
+function leerTema() {
+  try {
+    const guardado = localStorage.getItem(CLAVE_TEMA);
+
+    // Solo aceptamos los dos valores válidos, por si el dato guardado está dañado.
+    if (guardado === "oscuro" || guardado === "claro") return guardado;
+  } catch (error) {
+    // Si localStorage está bloqueado, seguimos sin recordar la elección.
+    console.error(error);
+  }
+
+  // matchMedia pregunta al navegador si el sistema del usuario está en modo oscuro.
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro";
+}
+
+// Aplica el tema: cambia el atributo data-tema de <html> y actualiza el botón.
+// style.css usa ese atributo para elegir los colores.
+function aplicarTema(tema) {
+  document.documentElement.dataset.tema = tema;
+
+  // aria-pressed avisa a los lectores de pantalla si el modo oscuro está activo.
+  const oscuro = tema === "oscuro";
+  botonTema.setAttribute("aria-pressed", oscuro ? "true" : "false");
+  botonTema.textContent = oscuro ? "☀️ Modo claro" : "🌙 Modo oscuro";
+}
+
+// Al hacer clic cambiamos al tema contrario y guardamos la elección.
+botonTema.addEventListener("click", function () {
+  const nuevoTema = document.documentElement.dataset.tema === "oscuro" ? "claro" : "oscuro";
+  aplicarTema(nuevoTema);
+
+  try {
+    localStorage.setItem(CLAVE_TEMA, nuevoTema);
+  } catch (error) {
+    console.error(error);
+  }
+});
+
 // ===== INICIO =====
+
+// Primero aplicamos el tema guardado para que la página arranque con los colores correctos.
+aplicarTema(leerTema());
 
 // Al abrir la página, recuperamos los favoritos guardados y los mostramos.
 favoritos = leerFavoritos();

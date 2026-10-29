@@ -415,3 +415,110 @@ a:hover {
     padding: 3.5rem 1.5rem;
   }
 }
+
+/* ===== RETO EXTRA: MODO OSCURO ===== */
+
+/* En modo claro, los controles propios del navegador
+   también utilizan una apariencia clara. */
+:root {
+  color-scheme: light;
+}
+
+/* Cuando HTML tenga data-tema="oscuro", estos valores
+   reemplazan las variables de la paleta clara.
+   Los estilos existentes siguen usando los mismos nombres. */
+[data-tema="oscuro"] {
+  /* Fondos de la página, tarjetas y zonas secundarias. */
+  --color-fondo: #0f1c21;
+  --color-superficie: #16272e;
+  --color-superficie-suave: #1d333c;
+
+  /* Colores para el texto principal y secundario. */
+  --color-texto: #e6f1f3;
+  --color-texto-suave: #a9c3c9;
+
+  /* Colores del encabezado y los botones principales. */
+  --color-azul: #1f6f8b;
+  --color-azul-profundo: #164f64;
+  --color-texto-sobre-azul: #ffffff;
+  --color-verde: #b4ed50;
+
+  /* Bordes, enlaces y contornos de enfoque. */
+  --color-borde: #2f4a53;
+  --color-enlace: #7fd0ea;
+  --color-foco: #7fd0ea;
+
+  /* Etiquetas de personajes vivos. */
+  --color-vivo-fondo: #1d3d26;
+  --color-vivo-texto: #a6e8b4;
+
+  /* Etiquetas de personajes muertos. */
+  --color-muerto-fondo: #4a2326;
+  --color-muerto-texto: #ffb9b9;
+
+  /* Etiquetas de estado desconocido. */
+  --color-desconocido-fondo: #28383f;
+  --color-desconocido-texto: #c3d3d9;
+
+  /* Apariencia de los favoritos seleccionados. */
+  --color-favorito-fondo: #3b5a1a;
+  --color-favorito-texto: #dff5b3;
+
+  /* Sombra adaptada a los fondos oscuros. */
+  --sombra: 0 8px 24px rgb(0 0 0 / 40%);
+
+  /* Informa al navegador de que debe usar controles
+     nativos oscuros, como los menús de los selectores. */
+  color-scheme: dark;
+}
+
+/* ===== BOTÓN PARA CAMBIAR DE TEMA ===== */
+
+/* Utiliza las variables compartidas: su fondo, texto y borde
+   se adaptan automáticamente al tema seleccionado. */
+.boton-tema {
+  display: inline-block;
+  max-width: 100%;
+  min-height: 44px;
+  margin-top: 1rem;
+  padding: 0.7rem 1rem;
+  border: 2px solid var(--color-borde);
+  border-radius: 10px;
+  background-color: var(--color-superficie);
+  color: var(--color-texto);
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* Al pasar el ratón, cambia el fondo y destaca el borde
+   para mostrar que el botón es interactivo. */
+.boton-tema:hover {
+  border-color: var(--color-verde);
+  background-color: var(--color-superficie-suave);
+}
+
+/* Al navegar con el teclado, el contorno verde permite
+   localizar el botón sobre el fondo azul del encabezado. */
+.boton-tema:focus-visible {
+  outline: 3px solid var(--color-verde);
+  outline-offset: 4px;
+}
+
+/* ===== CAMBIO SUAVE DE COLORES ===== */
+
+/* El fondo y el texto del body cambian durante 0.3 segundos.
+   Esta regla añade la transición sin reemplazar sus otros estilos. */
+body {
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Si la persona prefiere reducir las animaciones,
+   el cambio de tema se aplica inmediatamente. */
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
+}
